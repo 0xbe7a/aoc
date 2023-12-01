@@ -1,5 +1,11 @@
+#![feature(portable_simd)]
+#![feature(int_roundings)]
+#![feature(array_windows)]
+#![feature(iter_intersperse)]
 use std::env;
 use std::fs;
+
+pub mod solutions;
 
 pub fn read_file(folder: &str, day: u8) -> String {
     let cwd = env::current_dir().unwrap();

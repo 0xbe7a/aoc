@@ -5,4 +5,32 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+name = "aoc"
+path = "src/lib.rs"
+
+[[bin]]
+name = "aoc"
+path = "src/main.rs"
+
 [dependencies]
+nom = "*"
+priority-queue = "*"
+rustc-hash = "*"
+itertools = "*"
+rayon = "*"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "day03"
+harness = false
+
+[[bench]]
+name = "day06"
+harness = false
+
+[[bench]]
+name = "days"
+harness = false
