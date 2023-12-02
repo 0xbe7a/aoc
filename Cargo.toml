@@ -24,13 +24,5 @@ rayon = "*"
 criterion = "0.3"
 
 [[bench]]
-name = "day03"
-harness = false
-
-[[bench]]
-name = "day06"
-harness = false
-
-[[bench]]
 name = "days"
 harness = false

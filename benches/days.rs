@@ -18,20 +18,6 @@ macro_rules! bench_day {
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    bench_day!(c, day15, 15);
-    bench_day!(c, day14, 14);
-    bench_day!(c, day13, 13);
-    bench_day!(c, day12, 12);
-    bench_day!(c, day11, 11);
-    bench_day!(c, day10, 10);
-    bench_day!(c, day09, 9);
-    bench_day!(c, day08, 8);
-    bench_day!(c, day07, 7);
-    bench_day!(c, day06, 6);
-    bench_day!(c, day05, 5);
-    bench_day!(c, day04, 4);
-    bench_day!(c, day03, 3);
-    bench_day!(c, day02, 2);
     bench_day!(c, day01, 1);
 }
 
