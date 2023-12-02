@@ -29,29 +29,28 @@ fn end_matches(window: u64, s: &str) -> bool {
     (window & mask) == s_val
 }
 
-
 fn get_digits_part2(s: &str) -> (u8, u8) {
     let mut first = None;
     let mut last = None;
 
-    let get_digit = |window: u64| -> Option<u8> {
-        if end_matches(window, "1") || end_matches(window, "one") {
+    let get_digit = |c: u8, window: u64| -> Option<u8> {
+        if c == b'1' || end_matches(window, "one") {
             Some(1)
-        } else if end_matches(window, "2") || end_matches(window, "two") {
+        } else if c == b'2' || end_matches(window, "two") {
             Some(2)
-        } else if end_matches(window, "3") || end_matches(window, "three") {
+        } else if c == b'3' || end_matches(window, "three") {
             Some(3)
-        } else if end_matches(window, "4") || end_matches(window, "four") {
+        } else if c == b'4' || end_matches(window, "four") {
             Some(4)
-        } else if end_matches(window, "5") || end_matches(window, "five") {
+        } else if c == b'5' || end_matches(window, "five") {
             Some(5)
-        } else if end_matches(window, "6") || end_matches(window, "six") {
+        } else if c == b'6' || end_matches(window, "six") {
             Some(6)
-        } else if end_matches(window, "7") || end_matches(window, "seven") {
+        } else if c == b'7' || end_matches(window, "seven") {
             Some(7)
-        } else if end_matches(window, "8") || end_matches(window, "eight") {
+        } else if c == b'8' || end_matches(window, "eight") {
             Some(8)
-        } else if end_matches(window, "9") || end_matches(window, "nine") {
+        } else if c == b'9' || end_matches(window, "nine") {
             Some(9)
         } else {
             None
@@ -63,7 +62,7 @@ fn get_digits_part2(s: &str) -> (u8, u8) {
     for c in s.bytes() {
         window = (window << 8) | (c as u64);
 
-        if let Some(d) = get_digit(window) {
+        if let Some(d) = get_digit(c, window) {
             if first.is_none() {
                 first = Some(d)
             }
@@ -118,6 +117,4 @@ mod tests {
         let input = read_file("inputs", 1);
         assert_eq!(part_two(&input), 54094);
     }
-
-    
 }
