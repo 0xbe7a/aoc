@@ -97,19 +97,27 @@ pub fn part_two(input: &str) -> u32 {
 
 #[cfg(test)]
 mod tests {
+    use crate::{read_file, read_file_with_name};
+
     use super::*;
 
     #[test]
     fn test_part_one() {
-        use crate::read_file_with_name;
         let input = read_file_with_name("examples", "01_1");
         assert_eq!(part_one(&input), 142);
+
+        let input = read_file("inputs", 1);
+        assert_eq!(part_one(&input), 54968);
     }
 
     #[test]
     fn test_part_two() {
-        use crate::read_file_with_name;
         let input = read_file_with_name("examples", "01_2");
         assert_eq!(part_two(&input), 281);
+
+        let input = read_file("inputs", 1);
+        assert_eq!(part_two(&input), 54094);
     }
+
+    
 }
