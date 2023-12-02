@@ -15,13 +15,26 @@ fn get_digits_part1(s: &str) -> (u8, u8) {
     (first.unwrap(), last.unwrap())
 }
 
+fn end_matches(window: u64, s: &str) -> bool {
+    let s_bytes = s.as_bytes();
+    let s_len = s_bytes.len();
+
+    // Convert s to a u64, aligned to the right
+    let mut s_val: u64 = 0;
+    for &b in s_bytes {
+        s_val = (s_val << 8) | (b as u64);
+    }
+
+    let mask = (1u64 << (8 * s_len)) - 1;
+    (window & mask) == s_val
+}
+
+
 fn get_digits_part2(s: &str) -> (u8, u8) {
     let mut first = None;
     let mut last = None;
 
-    let end_matches = |window: &[u8; 5], s: &str| &window[window.len() - s.len()..] == s.as_bytes();
-
-    let get_digit = |window: &[u8; 5]| -> Option<u8> {
+    let get_digit = |window: u64| -> Option<u8> {
         if end_matches(window, "1") || end_matches(window, "one") {
             Some(1)
         } else if end_matches(window, "2") || end_matches(window, "two") {
@@ -45,13 +58,12 @@ fn get_digits_part2(s: &str) -> (u8, u8) {
         }
     };
 
-    let mut window = [0; 5];
+    let mut window: u64 = 0;
 
-    for c in s.chars() {
-        window[0] = c as u8;
-        window.rotate_left(1);
+    for c in s.bytes() {
+        window = (window << 8) | (c as u64);
 
-        if let Some(d) = get_digit(&window) {
+        if let Some(d) = get_digit(window) {
             if first.is_none() {
                 first = Some(d)
             }
@@ -61,22 +73,6 @@ fn get_digits_part2(s: &str) -> (u8, u8) {
     }
 
     (first.unwrap(), last.unwrap())
-}
-
-fn read_elves(input: &str) -> Vec<Vec<u32>> {
-    let mut lines = input.lines();
-    let mut elves = Vec::new();
-    loop {
-        let elf: Vec<_> = (&mut lines)
-            .map_while(|line| line.parse::<u32>().ok())
-            .collect();
-        if elf.is_empty() {
-            break;
-        }
-
-        elves.push(elf);
-    }
-    elves
 }
 
 pub fn part_one(input: &str) -> u32 {
