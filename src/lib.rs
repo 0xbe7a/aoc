@@ -1,7 +1,3 @@
-#![feature(portable_simd)]
-#![feature(int_roundings)]
-#![feature(array_windows)]
-#![feature(iter_intersperse)]
 use std::env;
 use std::fs;
 
