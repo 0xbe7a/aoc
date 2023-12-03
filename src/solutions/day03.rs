@@ -19,7 +19,7 @@ struct RawBoard {
 
 struct Board {
     numbers: Vec<u32>,
-    adjacent_numbers_to_symbols: Vec<(char, SmallVec<[NumberIdx; 8]>)>,
+    adjacent_numbers_to_symbols: Vec<(char, SmallVec<[NumberIdx; 6]>)>,
 }
 
 fn parse_input(input: &str) -> RawBoard {
@@ -86,7 +86,7 @@ fn process_board(input: &str) -> Board {
     let mut adjacent_numbers_to_symbols = Vec::new();
 
     for (symbol_cord, symbol) in symbols.into_iter() {
-        let mut adjacent_numbers = SmallVec::<[NumberIdx; 8]>::new();
+        let mut adjacent_numbers = SmallVec::<[NumberIdx; 6]>::new();
 
         let x_range =
             max(symbol_cord.x.saturating_sub(1), 0)..=min(symbol_cord.x + 1, size - 1);
