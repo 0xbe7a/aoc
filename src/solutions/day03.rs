@@ -3,23 +3,6 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-#[derive(Debug)]
-enum Symbol {
-    Dot,
-    Digit(u8),
-    Other(char),
-}
-
-impl Symbol {
-    fn from_char(c: char) -> Self {
-        match c {
-            '.' => Symbol::Dot,
-            '0'..='9' => Symbol::Digit(c.to_digit(10).unwrap() as u8),
-            _ => Symbol::Other(c),
-        }
-    }
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Coord {
     x: usize,
@@ -74,10 +57,10 @@ fn parse_input(input: &str) -> RawBoard {
         let mut current_number = None;
 
         for (x, c) in line.chars().enumerate() {
-            let s = Symbol::from_char(c);
+            match c {
+                '0'..='9' => {
+                    let d =  c.to_digit(10).unwrap() as u8;
 
-            match s {
-                Symbol::Digit(d) => {
                     let num = current_number.get_or_insert(ContingousNumber {
                         coord: Coord { x, y },
                         length: 0,
@@ -92,7 +75,7 @@ fn parse_input(input: &str) -> RawBoard {
                     // end current number parsing, if any
                     store_number(&mut current_number);
 
-                    if let Symbol::Other(c) = s {
+                    if c != '.' {
                         symbols.insert(Coord { x, y }, c);
                     }
                 }
