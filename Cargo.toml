@@ -19,6 +19,8 @@ priority-queue = "*"
 rustc-hash = "*"
 itertools = "*"
 rayon = "*"
+fxhash = "0.2.1"
+smallvec = "*"
 
 [dev-dependencies]
 criterion = "0.3"

@@ -1,7 +1,6 @@
-use std::{
-    cmp::{max, min},
-    collections::{HashMap, HashSet},
-};
+use std::cmp::{max, min};
+
+use smallvec::SmallVec;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Coord {
@@ -11,86 +10,74 @@ struct Coord {
 
 #[derive(Debug)]
 struct ContingousNumber {
-    coord: Coord,
     length: u8,
     value: u32,
 }
 
 struct RawBoard {
-    digits: HashMap<Coord, Coord>,
-    numbers: HashMap<Coord, ContingousNumber>,
-    symbols: HashMap<Coord, char>,
-    size: (usize, usize),
+    numbers: Vec<ContingousNumber>,
+    digits: Vec<Option<usize>>,
+    symbols: Vec<(Coord, char)>,
+    size: usize,
 }
 
 struct Board {
-    numbers: HashMap<Coord, ContingousNumber>,
-    adjacent_numbers_to_symbols: HashMap<Coord, (char, HashSet<Coord>)>,
+    numbers: Vec<ContingousNumber>,
+    adjacent_numbers_to_symbols: Vec<(char, SmallVec<[usize; 8]>)>,
 }
 
 fn parse_input(input: &str) -> RawBoard {
-    let mut symbols = HashMap::new();
-    let mut numbers = HashMap::new();
-    let mut digits = HashMap::new();
+    let mut symbols = Vec::new();
+    let mut numbers = Vec::new();
+    let size = input.lines().count();
 
-    let mut store_number = |current_number: &mut Option<ContingousNumber>| {
-        if let Some(num) = current_number.take() {
-            numbers.insert(num.coord, num);
-        }
-    };
+    let mut digits = vec![None; size * size];
 
-    let mut size = (None, 0);
+    let end_current_number =
+        |numbers: &mut Vec<ContingousNumber>, current_number: &mut Option<ContingousNumber>| {
+            if let Some(num) = current_number.take() {
+                numbers.push(num);
+            }
+        };
 
     for (y, line) in input.lines().enumerate() {
-        if size.0.is_none() {
-            size.0 = Some(line.len());
-        } else {
-            assert_eq!(
-                size.0.unwrap(),
-                line.len(),
-                "lines should have the same length"
-            );
-        }
-
-        size.1 = y + 1;
-
         let mut current_number = None;
 
         for (x, c) in line.chars().enumerate() {
             match c {
                 '0'..='9' => {
-                    let d =  c.to_digit(10).unwrap() as u8;
+                    let d = c.to_digit(10).unwrap();
 
                     let num = current_number.get_or_insert(ContingousNumber {
-                        coord: Coord { x, y },
                         length: 0,
                         value: 0,
                     });
 
                     num.length += 1;
-                    num.value = num.value * 10 + d as u32;
-                    digits.insert(Coord { x, y }, num.coord);
+                    num.value = num.value * 10 + d;
+
+                    digits[y * size + x] = Some(numbers.len());
                 }
                 _ => {
                     // end current number parsing, if any
-                    store_number(&mut current_number);
+                    end_current_number(&mut numbers, &mut current_number);
 
                     if c != '.' {
-                        symbols.insert(Coord { x, y }, c);
+                        symbols.push((Coord { x, y }, c));
                     }
                 }
             }
         }
 
         // end current number parsing, if any
-        store_number(&mut current_number);
+        end_current_number(&mut numbers, &mut current_number);
     }
 
     RawBoard {
         digits,
         numbers,
         symbols,
-        size: (size.0.unwrap_or(0), size.1),
+        size,
     }
 }
 
@@ -103,31 +90,32 @@ fn process_board(input: &str) -> Board {
     } = parse_input(input);
 
     // build up adjacency map for symbols
-    let mut adjacent_numbers_to_symbols = HashMap::new();
+    let mut adjacent_numbers_to_symbols = Vec::new();
 
     for (symbol_cord, symbol) in symbols.into_iter() {
-        let mut adjacent_numbers = HashSet::new();
+        let mut adjacent_numbers = SmallVec::<[usize; 8]>::new();
 
         let x_range =
-            max(symbol_cord.x as isize - 1, 0) as usize..=min(symbol_cord.x + 1, size.0 - 1);
+            max(symbol_cord.x.saturating_sub(1), 0) as usize..=min(symbol_cord.x + 1, size - 1);
 
         let y_range =
-            max(symbol_cord.y as isize - 1, 0) as usize..=min(symbol_cord.y + 1, size.1 - 1);
+            max(symbol_cord.y.saturating_sub(1), 0) as usize..=min(symbol_cord.y + 1, size - 1);
 
         for (x, y) in x_range.flat_map(|x| y_range.clone().map(move |y| (x, y))) {
-            let lookup_coord = Coord { x, y };
-
-            if lookup_coord == symbol_cord {
+            if symbol_cord.x == x && symbol_cord.y == y {
                 continue;
             }
 
-            if let Some(number_cord) = digits.get(&lookup_coord) {
-                adjacent_numbers.insert(*number_cord);
+            if let Some(number_cord) = digits[y * size + x] {
+                if adjacent_numbers.contains(&number_cord) {
+                    continue;
+                }
+                adjacent_numbers.push(number_cord);
             }
         }
 
         if !adjacent_numbers.is_empty() {
-            adjacent_numbers_to_symbols.insert(symbol_cord, (symbol, adjacent_numbers));
+            adjacent_numbers_to_symbols.push((symbol, adjacent_numbers));
         }
     }
 
@@ -143,17 +131,19 @@ pub fn part_one(input: &str) -> u32 {
         adjacent_numbers_to_symbols,
     } = process_board(input);
 
-    let mut part_numbers = HashSet::new();
+    let mut is_part_number = vec![false; numbers.len()];
 
-    for (_, numbers) in adjacent_numbers_to_symbols.values() {
+    for (_, numbers) in adjacent_numbers_to_symbols.into_iter() {
         for start_cord in numbers {
-            part_numbers.insert(start_cord);
+            is_part_number[start_cord] = true;
         }
     }
 
-    part_numbers
-        .iter()
-        .map(|c| numbers.get(c).unwrap().value)
+    is_part_number
+        .into_iter()
+        .enumerate()
+        .filter(|(_, is_part)| *is_part)
+        .map(|(c, _)| numbers.get(c).unwrap().value)
         .sum()
 }
 
@@ -165,14 +155,14 @@ pub fn part_two(input: &str) -> u32 {
 
     let mut total_gear_ratios = 0;
 
-    for (c, adjacent_numbers) in adjacent_numbers_to_symbols.values() {
-        if *c != '*' || adjacent_numbers.len() != 2 {
+    for (c, adjacent_numbers) in adjacent_numbers_to_symbols.into_iter() {
+        if c != '*' || adjacent_numbers.len() != 2 {
             continue;
         }
 
         let gear_ratio = adjacent_numbers
             .iter()
-            .map(|c| numbers.get(c).unwrap().value)
+            .map(|c| numbers.get(*c).unwrap().value)
             .product::<u32>();
 
         total_gear_ratios += gear_ratio;
