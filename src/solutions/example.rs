@@ -21,7 +21,7 @@ mod tests {
 
     #[test]
     fn test_part_two() {
-        let input = read_file_with_name("examples", 25);
+        let input = read_file("examples", 25);
         assert_eq!(part_two(&input), 0);
     }
 }
