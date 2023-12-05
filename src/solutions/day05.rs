@@ -44,30 +44,9 @@ fn parse_input(input: &str) -> Input {
         maps.push(map_section);
     }
 
-    // prepare maps for binary search
-    for section in maps.iter_mut() {
-        section.sort_by(|a, b| a.src.cmp(&b.src));
-    }
-
     Input {
         maps,
         input_numbers,
-    }
-}
-
-fn find_containing_map(section: &[Map], n: usize) -> Option<&Map> {
-    match section.binary_search_by_key(&n, |map| map.src) {
-        Ok(index) => Some(&section[index]),
-        Err(index) if (index > 0) => {
-            let map = &section[index - 1];
-
-            if map.src + map.len > n {
-                Some(map)
-            } else {
-                None
-            }
-        }
-        _ => None,
     }
 }
 
@@ -79,7 +58,7 @@ pub fn part_one(input: &str) -> u32 {
 
     for section in maps {
         for number in input_numbers.iter_mut() {
-            let map = find_containing_map(&section, *number);
+            let map = section.iter().find(|&map| map.src <= *number && map.src + map.len > *number);
 
             if let Some(map) = map {
                 *number = map.dst + (*number - map.src);
@@ -103,7 +82,7 @@ pub fn part_two(input: &str) -> u32 {
 
         for (mut start, mut len) in ranges {
             while len > 0 {
-                let map = find_containing_map(&section, start);
+                let map = section.iter().find(|&map| map.src <= start && map.src + map.len > start);
 
                 if let Some(map) = map {
                     let captured = min(len, map.src + map.len - start);
