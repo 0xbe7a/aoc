@@ -65,6 +65,7 @@ struct Hand {
     cards: HandCards,
     interpretation: HandInterpretation,
     bet: usize,
+    with_jokers: bool,
 }
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
@@ -151,29 +152,34 @@ impl HandInterpretation {
     }
 }
 
+impl PartialOrd for Hand {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Hand {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.interpretation != other.interpretation {
+            return (self.interpretation as usize).cmp(&(other.interpretation as usize));
+        }
+
+        if self.with_jokers {
+            self.cards.joker_order(&other.cards)
+        } else {
+            self.cards.cmp(&other.cards)
+        }
+    }
+}
+
 impl Hand {
     fn new(cards: [Card; 5], bet: usize, with_jokers: bool) -> Hand {
         Self {
             cards: HandCards(cards),
             interpretation: HandInterpretation::from_cards(cards, with_jokers),
             bet,
+            with_jokers,
         }
-    }
-
-    fn traditional_order(&self, other: &Self) -> Ordering {
-        if self.interpretation != other.interpretation {
-            return (self.interpretation as usize).cmp(&(other.interpretation as usize));
-        }
-
-        self.cards.cmp(&other.cards)
-    }
-
-    fn joker_order(&self, other: &Self) -> Ordering {
-        if self.interpretation != other.interpretation {
-            return (self.interpretation as usize).cmp(&(other.interpretation as usize));
-        }
-
-        self.cards.joker_order(&other.cards)
     }
 }
 
@@ -195,12 +201,12 @@ fn parse_input(inpuit: &str) -> impl Iterator<Item = ([Card; 5], usize)> + '_ {
     })
 }
 
-pub fn part_one(input: &str) -> u32 {
+fn solve(input: &str, with_jokers: bool) -> u32 {
     let mut input: Vec<_> = parse_input(input)
-        .map(|(cards, bet)| Hand::new(cards, bet, false))
+        .map(|(cards, bet)| Hand::new(cards, bet, with_jokers))
         .collect();
 
-    input.sort_by(|a, b| a.traditional_order(b));
+    input.sort();
 
     input
         .into_iter()
@@ -209,18 +215,12 @@ pub fn part_one(input: &str) -> u32 {
         .sum::<usize>() as u32
 }
 
+pub fn part_one(input: &str) -> u32 {
+    solve(input, false)
+}
+
 pub fn part_two(input: &str) -> u32 {
-    let mut input: Vec<_> = parse_input(input)
-        .map(|(cards, bet)| Hand::new(cards, bet, true))
-        .collect();
-
-    input.sort_by(|a, b| a.joker_order(b));
-
-    input
-        .into_iter()
-        .enumerate()
-        .map(|(i, hand)| (i + 1) * hand.bet)
-        .sum::<usize>() as u32
+    solve(input, true)
 }
 
 #[cfg(test)]
