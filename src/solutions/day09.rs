@@ -62,11 +62,17 @@ mod tests {
     fn test_part_one() {
         let input = read_file("examples", 9);
         assert_eq!(part_one(&input), 114);
+
+        let input = read_file("inputs", 9);
+        assert_eq!(part_one(&input), 1637452029);
     }
 
     #[test]
     fn test_part_two() {
         let input = read_file("examples", 9);
         assert_eq!(part_two(&input), 2);
+
+        let input = read_file("inputs", 9);
+        assert_eq!(part_two(&input), 908);
     }
 }
