@@ -1,4 +1,5 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::VecDeque;
+use grid::Grid;
 
 #[derive(Debug)]
 enum Pipe {
@@ -71,8 +72,7 @@ impl Pipe {
 }
 
 struct Input {
-    grid: Vec<Option<Pipe>>,
-    size: (usize, usize),
+    grid: Grid<Option<Pipe>>,
     starting_point: (usize, usize),
 }
 
@@ -93,47 +93,52 @@ fn parse_input(input: &str) -> Input {
 
         no_lines += 1;
     }
-
-    let size = (no_lines, grid.len() / no_lines);
+    
+    let cols = grid.len() / no_lines;
+    let grid = Grid::from_vec(grid, cols);
 
     Input {
         grid,
         starting_point: starting_point.expect("No starting point found"),
-        size,
     }
 }
 
-fn flood_loop(input: &Input) -> HashMap<(usize, usize), u32> {
+fn flood_loop(input: &Input) -> Grid<Option<u16>> {
     let Input {
         grid,
-        size,
         starting_point,
     } = input;
 
     let mut frontier = VecDeque::new();
     frontier.push_back((*starting_point, 0, *starting_point));
 
-    let mut distances: HashMap<(usize, usize), u32> = HashMap::new();
+    let mut distances = Grid::init(grid.rows(), grid.cols(), None);
 
     while let Some((pipe, distance, origin)) = frontier.pop_front() {
-        if distances.contains_key(&pipe) {
+        if distances[pipe].is_some() {
             break;
         }
 
-        distances.insert(pipe, distance);
-        let current_pipe_shape = grid[pipe.0 * size.1 + pipe.1].as_ref().unwrap();
+        distances[pipe] = Some(distance);
+        let current_pipe_shape = grid[pipe].as_ref().unwrap();
 
         for port in [Port::North, Port::East, Port::South, Port::West].iter() {
             let (dy, dx) = port.offset();
-            let next_y = pipe.0.saturating_add_signed(dy).min(size.0 - 1);
-            let next_x = pipe.1.saturating_add_signed(dx).min(size.1 - 1);
 
-            if let Some(next_pipe_shape) = &grid[next_y * size.1 + next_x] {
+            let next_y = pipe.0.saturating_add_signed(dy);
+            let next_x = pipe.1.saturating_add_signed(dx);
+
+            if (next_y, next_x) == origin {
+                continue;
+            }
+
+            let cell = match grid.get(next_y, next_x) {
+                Some(cell) => cell,
+                None => continue,
+            };
+
+            if let Some(next_pipe_shape) = cell {
                 if current_pipe_shape.is_connected_to(next_pipe_shape, port) {
-                    if (next_y, next_x) == origin {
-                        continue;
-                    }
-
                     frontier.push_back(((next_y, next_x), distance + 1, pipe));
                 }
             }
@@ -143,11 +148,11 @@ fn flood_loop(input: &Input) -> HashMap<(usize, usize), u32> {
     distances
 }
 
-pub fn part_one(input: &str) -> u32 {
+pub fn part_one(input: &str) -> u16 {
     let inputs = parse_input(input);
     let distances = flood_loop(&inputs);
 
-    distances.into_values().max().unwrap()
+    distances.iter().max().unwrap().unwrap()
 }
 
 pub fn part_two(input: &str) -> u32 {
@@ -156,13 +161,13 @@ pub fn part_two(input: &str) -> u32 {
 
     let mut inside = 0;
 
-    for y in 0..input.size.0 {
+    for y in 0..input.grid.rows() {
         let mut is_inside = false;
 
-        for x in 0..input.size.1 {
-            let shape = input.grid[y * input.size.1 + x].as_ref();
+        for x in 0..input.grid.cols() {
+            let shape = input.grid[(y, x)].as_ref();
 
-            if distances.contains_key(&(y, x)) {
+            if distances[(y, x)].is_some() {
                 if shape.as_ref().unwrap().connections().0 {
                     is_inside = !is_inside;
                 }
