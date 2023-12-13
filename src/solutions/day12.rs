@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 enum SpringState {
@@ -83,12 +83,12 @@ impl<'a> CheckState<'a> {
 }
 
 fn check_combinations(row: &[SpringState], groups: &[usize]) -> usize {
-    let mut current_states = HashMap::new();
+    let mut current_states = HashMap::default();
     current_states.insert(CheckState::new(groups), 1);
 
 
     for item in row {
-        let mut new_state = HashMap::new();
+        let mut new_state = HashMap::default();
 
         for (mut state, count) in current_states {
             match item {
