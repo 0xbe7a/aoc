@@ -25,6 +25,7 @@ regex = "1.10.2"
 bitvec = "1.0.1"
 num = "0.4.1"
 grid = "0.12.0"
+indicatif = { version = "0.17.7", features = ["rayon"] }
 
 [dev-dependencies]
 criterion = "0.5.1"
@@ -32,3 +33,7 @@ criterion = "0.5.1"
 [[bench]]
 name = "days"
 harness = false
+
+[profile.profiling]
+inherits = "release"
+debug = true

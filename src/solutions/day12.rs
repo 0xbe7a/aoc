@@ -1,6 +1,6 @@
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 enum SpringState {
     Operational,
     Broken,
@@ -18,7 +18,7 @@ impl SpringState {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Hash)]
 struct SpringRow {
     row: Vec<SpringState>,
     broken_groups: Vec<usize>,
@@ -34,107 +34,118 @@ fn parse_input(input: &str) -> impl Iterator<Item = SpringRow> + '_ {
     })
 }
 
-fn check_valid_assignment(row: &[SpringState], groups: &[usize], assignments: u64) -> bool {
-    let mut group_iter = groups.iter();
-    let mut current_group = group_iter.next().copied();
-
-    let mut last_state = None;
-    let mut num_unknown: u64 = 0;
-
-    let mut get_next_unknown = || {
-        let state = {
-            if (assignments >> num_unknown) & 1 == 1 {
-                SpringState::Broken
-            } else {
-                SpringState::Operational
-            }
-        };
-
-        num_unknown += 1;
-        state
-    };
-
-    for state in row {
-        let assigned_state = match state {
-            SpringState::Broken => SpringState::Broken,
-            SpringState::Operational => SpringState::Operational,
-            SpringState::Unknown => get_next_unknown()
-        };
-
-        match (last_state, &assigned_state, &mut current_group) {
-            (_, SpringState::Broken, Some(rem)) if *rem > 0 => {
-                *rem -= 1;
-            }
-            (None, SpringState::Operational, _) => {}
-            (Some(SpringState::Broken), SpringState::Operational, Some(0)) => {
-                current_group = group_iter.next().copied();
-            }
-            (Some(SpringState::Operational), SpringState::Operational, _) => {}
-            _ => {
-                return false;
-            }
-        };
-
-        last_state = Some(assigned_state);
-    }
-
-    if current_group == Some(0) {
-        current_group = group_iter.next().copied();
-    }
-
-    current_group.is_none()
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+struct CheckState<'a> {
+    last_item: Option<SpringState>,
+    current_group: Option<usize>,
+    next_group: usize,
+    groups: &'a [usize],
 }
 
-fn brute_force_row(row: &SpringRow) -> usize {
-    let num_unknown = row
-        .row
-        .iter()
-        .filter(|x| matches!(x, SpringState::Unknown))
-        .count();
+impl<'a> CheckState<'a> {
+    fn new(groups: &'a [usize]) -> Self {
+        Self {
+            last_item: None,
+            current_group: groups.first().copied(),
+            next_group: 1,
+            groups,
+        }
+    }
 
-    (0u64..(1 << num_unknown))
-        .into_par_iter()
-        .filter(|assignments| {
-            check_valid_assignment(
-                row.row.as_slice(),
-                row.broken_groups.as_slice(),
-                *assignments,
-            )
-        })
-        .count()
+    fn check_next_item_compatible(&mut self, item: SpringState) -> bool {
+        let last_item = self.last_item;
+        self.last_item = Some(item);
+
+        match (last_item, &item, &mut self.current_group) {
+            (_, SpringState::Broken, Some(rem)) if *rem > 0 => {
+                *rem -= 1;
+                true
+            }
+            (None, SpringState::Operational, _) => true,
+            (Some(SpringState::Broken), SpringState::Operational, Some(0)) => {
+                self.current_group = self.groups.get(self.next_group).copied();
+                self.next_group += 1;
+                true
+            }
+            (Some(SpringState::Operational), SpringState::Operational, _) => true,
+            _ => false,
+        }
+    }
+
+    fn is_finished(&mut self) -> bool {
+        if self.current_group == Some(0) {
+            self.current_group = self.groups.get(self.next_group).copied();
+            self.next_group += 1;
+        }
+
+        self.current_group.is_none()
+    }
+}
+
+fn check_combinations(row: &[SpringState], groups: &[usize]) -> usize {
+    let mut current_states = HashMap::new();
+    current_states.insert(CheckState::new(groups), 1);
+
+
+    for item in row {
+        let mut new_state = HashMap::new();
+
+        for (mut state, count) in current_states {
+            match item {
+                SpringState::Operational | SpringState::Broken => {
+                    if state.check_next_item_compatible(*item) {
+                        *new_state.entry(state).or_default() += count;
+                    }
+                }
+                SpringState::Unknown => {
+                    for item in [SpringState::Operational, SpringState::Broken] {
+                        let mut forked_state = state.clone();
+                        if forked_state.check_next_item_compatible(item) {
+                            *new_state.entry(forked_state).or_default() += count;
+                        }
+                    }
+                }
+            }
+        }
+
+        current_states = new_state;
+    }
+
+    let mut valid = 0;
+
+    for (mut state, count) in current_states {
+        if state.is_finished() {
+            valid += count;
+        }
+    }
+
+    valid
 }
 
 pub fn part_one(input: &str) -> usize {
-    parse_input(input).map(|row| brute_force_row(&row)).sum()
+    parse_input(input)
+        .map(|row| check_combinations(&row.row, &row.broken_groups))
+        .sum()
 }
 
 pub fn part_two(input: &str) -> usize {
-    // let mut total = 0;
+    let inputs = parse_input(input).collect::<Vec<_>>();
 
-    // for row in parse_input(input) {
-    //     let mut new_row = Vec::new();
-    //     let mut new_groups = Vec::new();
+    inputs.into_iter().map(|row| {
+        let mut new_row = Vec::new();
+        let mut new_groups = Vec::new();
 
-    //     for k in 0..5 {
-    //         if k != 0 {
-    //             new_row.push(SpringState::Unknown);
-    //         }
+        for k in 0..5 {
+            if k != 0 {
+                new_row.push(SpringState::Unknown);
+            }
 
-    //         new_row.extend(row.row.iter().cloned());
-    //         new_groups.extend(row.broken_groups.iter().copied());
-    //     };
+            new_row.extend(row.row.iter().cloned());
+            new_groups.extend(row.broken_groups.iter().copied());
+        };
 
-    //     let new_row = SpringRow {
-    //         row: new_row,
-    //         broken_groups: new_groups,
-    //     };
-
-    //     total += brute_force_row(&new_row);
-    // }
-
-    // total
-
-    0
+        check_combinations(&new_row, &new_groups)
+    }).sum()
 }
 
 #[cfg(test)]
