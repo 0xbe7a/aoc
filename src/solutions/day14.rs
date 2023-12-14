@@ -53,23 +53,42 @@ fn tilt_platform(grid: &mut Grid<Symbol>, direction: Direction) {
         Direction::West => grid.rotate_half(),
     };
 
-    let mut new_grid = Grid::new(0, grid.cols());
+    let mut new_grid_data = Vec::with_capacity(grid.rows() * grid.cols());
 
-    for row in grid.iter_rows() {
-        let tilted_row_data = row
-            .scan(0, |group, x| match x {
-                Symbol::Cube => {
-                    *group += 2;
-                    Some((*group - 1, *x))
+    for mut row in grid.iter_rows() {
+        loop {
+            let mut empty = 0;
+            let mut round = 0;
+            let mut has_cube = false;
+
+            for sym in row.by_ref() {
+                match sym {
+                    Symbol::Empty => empty += 1,
+                    Symbol::Round => round += 1,
+                    Symbol::Cube => {
+                        has_cube = true;
+                        break;
+                    }
                 }
-                s => Some((*group, *s)),
-            })
-            .sorted_unstable()
-            .map(|(_, x)| x)
-            .collect();
+            }
 
-        new_grid.push_row(tilted_row_data);
+            for _ in 0..empty {
+                new_grid_data.push(Symbol::Empty);
+            }
+
+            for _ in 0..round {
+                new_grid_data.push(Symbol::Round);
+            }
+
+            if has_cube {
+                new_grid_data.push(Symbol::Cube);
+            } else {
+                break
+            }
+        }
     }
+
+    let mut new_grid = Grid::from_vec(new_grid_data, grid.cols());
 
     match direction {
         Direction::North => new_grid.rotate_left(),
