@@ -1,6 +1,5 @@
 use grid::Grid;
-use itertools::Itertools;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
 enum Symbol {
@@ -120,7 +119,7 @@ pub fn part_one(input: &str) -> usize {
 
 pub fn part_two(input: &str) -> usize {
     let mut grid = parse_input(input);
-    let mut seen = HashMap::new();
+    let mut seen = HashMap::default();
     let mut i = 0;
 
     let tilt_cycle = |grid: &mut Grid<_>| {
