@@ -249,8 +249,7 @@ checksum = "e6d5a32815ae3f33302d95fdcb2ce17862f8c65363dcfd29360480ba1001fc9c"
 [[package]]
 name = "grid"
 version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1584ff6141ecb0340eeb8be523d027e3e1fe92ae34d9380a98ea991d65c564cc"
+source = "git+https://github.com/henryiii/grid.git?branch=henryiii/feat/hash#3df249b4d2711867c7105bc27b175b64f9b12a50"
 
 [[package]]
 name = "half"

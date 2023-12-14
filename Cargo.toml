@@ -24,7 +24,7 @@ once_cell = "1.18.0"
 regex = "1.10.2"
 bitvec = "1.0.1"
 num = "0.4.1"
-grid = "0.12.0"
+grid = { git = "https://github.com/henryiii/grid.git", branch = "henryiii/feat/hash" }
 indicatif = { version = "0.17.7", features = ["rayon"] }
 
 [dev-dependencies]
