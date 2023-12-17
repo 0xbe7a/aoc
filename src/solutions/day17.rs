@@ -1,7 +1,9 @@
 use std::{
     cmp::Reverse,
-    collections::{BinaryHeap, HashMap},
+    collections::BinaryHeap,
 };
+
+use rustc_hash::FxHashMap as HashMap;
 
 use grid::Grid;
 
@@ -64,7 +66,7 @@ fn find_min_path(
     grid: &Grid<u8>,
     is_valid_move: impl Fn(Direction, Direction, usize) -> bool,
 ) -> usize {
-    let mut dist = HashMap::new();
+    let mut dist = HashMap::default();
     let mut heap = BinaryHeap::new();
 
     let goal = (grid.rows() - 1, grid.cols() - 1);
