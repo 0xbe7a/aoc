@@ -53,17 +53,23 @@ impl Direction {
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 struct State {
-    cost: usize,
+    f_cost: usize,
+    g_cost: usize,
     prev_direction: Direction,
     moves_since_last_turn: usize,
     position: (usize, usize),
 }
+
 fn find_min_path(
     grid: &Grid<u8>,
     is_valid_move: impl Fn(Direction, Direction, usize) -> bool,
 ) -> usize {
     let mut dist = HashMap::new();
     let mut heap = BinaryHeap::new();
+
+    let goal = (grid.rows() - 1, grid.cols() - 1);
+
+    let manhattan_distance = |pos: (usize, usize)| (goal.0 - pos.0 + goal.1 - pos.1);
 
     let state_key = |state: &State| {
         (
@@ -74,22 +80,19 @@ fn find_min_path(
     };
 
     let start_state = State {
-        cost: 0,
+        f_cost: manhattan_distance((0, 0)),
+        g_cost: 0,
         prev_direction: Direction::Right,
         moves_since_last_turn: 0,
         position: (0, 0),
     };
 
-    dist.insert(state_key(&start_state), start_state.cost);
+    dist.insert(state_key(&start_state), 0);
     heap.push(Reverse(start_state));
 
     while let Some(Reverse(state)) = heap.pop() {
-        if state.position == (grid.rows() - 1, grid.cols() - 1) {
-            return state.cost;
-        }
-
-        if state.cost > dist[&state_key(&state)] {
-            continue;
+        if state.position == goal {
+            return dist[&state_key(&state)];
         }
 
         for &next_dir in &[
@@ -123,18 +126,21 @@ fn find_min_path(
                 1
             };
 
+            let new_g_cost = state.g_cost + grid[next_position] as usize;
+            let new_f_cost = new_g_cost + manhattan_distance(next_position);
+
             let next_state = State {
-                cost: state.cost + grid[next_position] as usize,
+                f_cost: new_f_cost,
+                g_cost: new_g_cost,
                 prev_direction: next_dir,
                 moves_since_last_turn: moves_count,
                 position: next_position,
             };
 
             let key = state_key(&next_state);
-            let next_cost = next_state.cost;
-            if next_cost < *dist.entry(key).or_insert(usize::MAX) {
+            if new_g_cost < *dist.entry(key).or_insert(usize::MAX) {
                 heap.push(Reverse(next_state));
-                dist.insert(key, next_cost);
+                dist.insert(key, new_g_cost);
             }
         }
     }
