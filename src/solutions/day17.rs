@@ -140,9 +140,11 @@ fn find_min_path(
             };
 
             let key = state_key(&next_state);
-            if new_g_cost < *dist.entry(key).or_insert(usize::MAX) {
+            let current_g_cost = dist.entry(key).or_insert(usize::MAX);
+
+            if new_g_cost < *current_g_cost {
                 heap.push(Reverse(next_state));
-                dist.insert(key, new_g_cost);
+                *current_g_cost = new_g_cost;
             }
         }
     }
