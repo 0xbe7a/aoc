@@ -126,7 +126,7 @@ fn interpolate(y0: f64, y1: f64, y2: f64, x: f64) -> f64 {
     let b = -3.0 * y0 / 2.0 + 2.0 * y1 - y2 / 2.0;
     let c = y0;
 
-    a * x.powf(2.) + b * x + c
+    a * x * x + b * x + c
 }
 
 #[cfg(test)]
