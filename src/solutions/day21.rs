@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use rustc_hash::FxHashSet as HashSet;
 
 use grid::Grid;
 
@@ -49,11 +49,11 @@ fn parse_grid(input: &str) -> (Grid<Cell>, (usize, usize)) {
 
 pub fn part_one(input: &str) -> usize {
     let (grid, starting_pos) = parse_grid(input);
-    let mut frontier = HashSet::new();
+    let mut frontier = HashSet::default();
     frontier.insert(starting_pos);
 
     for _ in 0..64 {
-        let mut next_frontier = HashSet::new();
+        let mut next_frontier = HashSet::default();
 
         for (y, x) in frontier {
             for (dy, dx) in &[(0, 1), (0, -1), (1, 0), (-1, 0)] {
@@ -81,13 +81,13 @@ pub fn part_one(input: &str) -> usize {
 pub fn part_two(input: &str) -> usize {
     let (grid, (sy, sx)) = parse_grid(input);
 
-    let mut frontier = HashSet::new();
+    let mut frontier = HashSet::default();
     frontier.insert((sy as isize, sx as isize));
 
     let mut y = Vec::new();
 
     for i in 1..=(65 + 2 * grid.cols()) {
-        let mut next_frontier = HashSet::new();
+        let mut next_frontier = HashSet::default();
 
         for (y, x) in frontier {
             for (dy, dx) in &[(0, 1), (0, -1), (1, 0), (-1, 0)] {
